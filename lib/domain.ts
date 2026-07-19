@@ -89,7 +89,7 @@ export function formatDuration(seconds: number) {
 }
 
 export function formatDate(timestamp: string) {
-  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(timestamp));
+  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(timestamp));
 }
 
 export function sportLabel(sportType: string) {

@@ -1,7 +1,7 @@
 import { countries } from "@/lib/countries";
 import type { ActivitySummary, AppState, PrivacySettings } from "@/lib/types";
 
-const now = new Date().toISOString();
+const demoTimestamp = "2026-07-19T00:00:00.000Z";
 
 export const defaultPrivacySettings: PrivacySettings = {
   publicPassportEnabled: false,
@@ -21,7 +21,7 @@ export const defaultPrivacySettings: PrivacySettings = {
   },
   discoverableWithinApp: false,
   allowSearchEngineIndexing: false,
-  updatedAt: now,
+  updatedAt: demoTimestamp,
 };
 
 function activity(
@@ -87,7 +87,7 @@ export function createDemoState(): AppState {
       imported: demoActivities.length,
       updated: 0,
       failed: 0,
-      completedAt: now,
+      completedAt: demoTimestamp,
       error: null,
       retryAfterSeconds: null,
     },
