@@ -1,32 +1,42 @@
 # STRAVA Passport
 
-STRAVA Passport is a private-by-default digital travel passport for endurance athletes.
+STRAVA Passport is a private-by-default athletic travel journal. This repository contains two independently hosted surfaces:
 
-This first local build is dependency-free so it can run directly from the workspace. It implements the core demo journey from the specification files:
+- The dependency-free demo in `index.html` and `src/`, published through GitHub Pages.
+- The private Strava beta in `app/`, `components/`, and `lib/`, deployed as a Next.js application on Vercel.
 
-- Demo Strava connection and synchronization status
-- Dashboard summaries
-- Passport stamp aggregation from activity summaries
-- Generalized country map
-- Private activity list
-- Privacy Center with public projection preview
-- Public Passport view
-- Export, disconnect, and account deletion controls
+The beta signs in one allow-listed Strava athlete, imports all activity summaries, resolves each activity's start point to an ISO country code locally on the server, and immediately discards the coordinates. Access and refresh tokens are encrypted before storage. Real-data public sharing is disabled.
 
-## Open the app
+## Local development
 
-Open `index.html` in a browser.
+Requirements: Node.js 22 and npm.
 
-No Strava credentials are required for Demo Mode.
+```bash
+npm install
+cp .env.example .env.local
+npm run dev
+```
 
-## Architecture notes
+Open `http://localhost:3000`. Without configured server variables, the visual demo builds and renders, but OAuth and authenticated APIs are unavailable.
 
-The app keeps business logic in `src/domain.js` and rendering/event handling in `src/app.js`. This mirrors the future production architecture in the Markdown specs: provider-specific integration should remain behind adapters, passport entries are derived and rebuildable, and public output is created through an allow-listed projection rather than by exposing private objects.
+## Verification
 
-## Next production steps
+```bash
+npm test
+npm run lint
+npx tsc --noEmit
+npm run build
+npm audit
+```
 
-1. Replace local demo persistence with a Next.js application server and secure session cookie.
-2. Add Strava OAuth through a server-side adapter.
-3. Add Supabase Postgres migrations using the schema in `database.md`.
-4. Move synchronization into durable background jobs.
-5. Add unit, API, and end-to-end tests once the runtime dependency issue is fixed.
+## Architecture
+
+- Next.js App Router serves the beta UI and same-origin API routes.
+- Supabase Postgres stores the athlete, encrypted Strava connection, normalized activity summaries, sync jobs, and privacy settings.
+- Browser access to Supabase tables is revoked; only server routes use the service-role key.
+- OAuth sessions use a signed, HTTP-only, same-site cookie.
+- Activity sync processes one Strava page of up to 200 summaries per request and can resume after a rate limit.
+- Country lookup runs locally from packaged GeoJSON boundaries. Coordinates and polylines are never persisted or returned.
+- The current public demo remains private-data-free and continues to work as a static site.
+
+See [DEPLOY_PRIVATE_BETA.md](DEPLOY_PRIVATE_BETA.md) for account creation and production setup.

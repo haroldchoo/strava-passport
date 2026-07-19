@@ -1,0 +1,45 @@
+@import "../src/styles.css";
+
+body {
+  min-height: 100vh;
+}
+
+button:disabled,
+input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.sync-progress {
+  margin-top: 12px;
+}
+
+.sync-progress progress {
+  width: 100%;
+}
+
+.notice {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.error-notice {
+  border-color: color-mix(in srgb, var(--danger) 50%, var(--border));
+}
+
+.unresolved {
+  color: var(--muted);
+}
+
+.row-card strong,
+.row-card small {
+  display: block;
+}
+
+.hero .button.secondary {
+  color: #17202a;
+  background: #ffffff;
+}
