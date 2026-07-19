@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <meta
+      name="description"
+      content="STRAVA Passport turns endurance activities into a private-by-default travel passport."
+    >
+    <title>STRAVA Passport</title>
+    <link rel="stylesheet" href="src/styles.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#dashboard" aria-label="STRAVA Passport dashboard">
+          <span class="brand-mark" aria-hidden="true">SP</span>
+          <span>
+            <strong>STRAVA Passport</strong>
+            <small>Private athletic travel journal</small>
+          </span>
+        </a>
+        <nav class="desktop-nav" aria-label="Primary">
+          <a href="#dashboard">Dashboard</a>
+          <a href="#passport">Passport</a>
+          <a href="#map">Map</a>
+          <a href="#activities">Activities</a>
+          <a href="#privacy">Privacy</a>
+          <a href="#settings">Settings</a>
+        </nav>
+        <button class="theme-toggle" type="button" data-action="toggle-theme" aria-label="Toggle color theme">
+          <span aria-hidden="true">◐</span>
+        </button>
+      </header>
+
+      <aside class="sidebar" aria-label="Passport summary">
+        <div class="profile-block" id="profile-block"></div>
+        <div class="sync-block" id="sync-block"></div>
+        <nav class="side-nav" aria-label="Sections">
+          <a href="#dashboard">Dashboard</a>
+          <a href="#passport">Passport</a>
+          <a href="#map">Map</a>
+          <a href="#activities">Activities</a>
+          <a href="#privacy">Privacy Center</a>
+          <a href="#public">Public Passport</a>
+          <a href="#settings">Settings</a>
+        </nav>
+      </aside>
+
+      <main id="main" class="main" tabindex="-1"></main>
+
+      <nav class="bottom-nav" aria-label="Primary mobile">
+        <a href="#dashboard">Home</a>
+        <a href="#passport">Passport</a>
+        <a href="#map">Map</a>
+        <a href="#activities">Log</a>
+        <a href="#privacy">Privacy</a>
+      </nav>
+    </div>
+
+    <div class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+    <dialog id="confirm-dialog" class="dialog">
+      <form method="dialog">
+        <h2 id="dialog-title"></h2>
+        <p id="dialog-copy"></p>
+        <div class="dialog-actions">
+          <button class="button secondary" value="cancel">Cancel</button>
+          <button class="button destructive" value="confirm" id="dialog-confirm">Confirm</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="src/domain.js"></script>
+    <script src="src/app.js"></script>
+  </body>
+</html>
