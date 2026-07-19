@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { WorldMap } from "@/components/world-map";
 import { buildDashboardSummary, buildPassportEntries, formatDate, formatDistance, formatDuration, sportLabel } from "@/lib/domain";
 import { createDemoState } from "@/lib/demo";
 import type { ActivitySummary, AppState, Country, PassportEntry, PrivacySettings, SyncJob } from "@/lib/types";
@@ -275,17 +276,7 @@ function MapView({ state }: { state: AppState }) {
     <>
       <PageTitle title="Map" copy="A generalized country map for exploration. Exact activity coordinates are not retained." />
       <section className="map-layout">
-        <div className="world-map" role="img" aria-label="Visited countries highlighted on a simplified world map">
-          {entries.map((entry) => (
-            <button
-              className="map-marker visited"
-              style={{ left: `${entry.country.x}%`, top: `${entry.country.y}%` }}
-              title={`${entry.country.name}: ${entry.activityCount} activities`}
-              aria-label={`${entry.country.name}: ${entry.activityCount} activities`}
-              key={entry.country.code}
-            ><span>{entry.country.code}</span></button>
-          ))}
-        </div>
+        <WorldMap entries={entries} />
         <div className="map-panel"><h2>Visited countries</h2><p>Country summaries are derived server-side and contain no activity coordinates.</p><div className="country-list compact">{entries.map((entry) => <CountryRow key={entry.country.code} entry={entry} />)}</div></div>
       </section>
     </>
