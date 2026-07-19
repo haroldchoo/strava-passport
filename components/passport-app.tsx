@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { WorldMap } from "@/components/world-map";
-import { buildDashboardSummary, buildPassportEntries, formatDate, formatDistance, formatDuration, sportLabel } from "@/lib/domain";
+import { buildDashboardSummary, buildPassportEntries, filterAndSortPassportEntries, formatDate, formatDistance, formatDuration, sportLabel } from "@/lib/domain";
+import type { PassportSort } from "@/lib/domain";
 import { createDemoState } from "@/lib/demo";
 import type { ActivitySummary, AppState, Country, PassportEntry, PrivacySettings, SyncJob } from "@/lib/types";
 
@@ -252,20 +253,43 @@ function Dashboard({ state, busy, onSync }: { state: AppState; busy: boolean; on
 
 function Passport({ state }: { state: AppState }) {
   const entries = buildPassportEntries(state);
+  const [scope, setScope] = useState<"unlocked" | "all">("unlocked");
+  const [sportFilter, setSportFilter] = useState("all");
+  const [sortBy, setSortBy] = useState<PassportSort>("latest");
+  const sportTypes = [...new Set(entries.flatMap((entry) => entry.sportTypes))].sort((a, b) => sportLabel(a).localeCompare(sportLabel(b)));
+  const visibleEntries = filterAndSortPassportEntries(entries, sportFilter, sortBy);
   const unlocked = new Set(entries.map((entry) => entry.country.code));
-  const locked = state.countries.filter((country) => !unlocked.has(country.code)).slice(0, 3);
+  const locked = scope === "all" && sportFilter === "all"
+    ? state.countries.filter((country) => !unlocked.has(country.code)).sort((a, b) => a.name.localeCompare(b.name))
+    : [];
+  const hasResults = visibleEntries.length > 0 || locked.length > 0;
   return (
     <>
       <PageTitle title="Passport" copy="Collected country stamps from your endurance activity history." />
       <div className="toolbar" role="toolbar" aria-label="Passport filters">
-        <button className="chip active" type="button">Unlocked</button>
-        <button className="chip" type="button">All sports</button>
-        <button className="chip" type="button">Latest visit</button>
+        <select className="chip" aria-label="Country status" value={scope} onChange={(event) => setScope(event.target.value as "unlocked" | "all")}>
+          <option value="unlocked">Unlocked</option>
+          <option value="all">All countries</option>
+        </select>
+        <select className="chip" aria-label="Sport type" value={sportFilter} onChange={(event) => setSportFilter(event.target.value)}>
+          <option value="all">All sports</option>
+          {sportTypes.map((sport) => <option value={sport} key={sport}>{sportLabel(sport)}</option>)}
+        </select>
+        <select className="chip" aria-label="Passport order" value={sortBy} onChange={(event) => setSortBy(event.target.value as PassportSort)}>
+          <option value="latest">Latest visit</option>
+          <option value="earliest">Earliest visit</option>
+          <option value="country">Country A-Z</option>
+          <option value="activities">Most activities</option>
+        </select>
       </div>
-      <section className="stamp-grid" aria-label="Unlocked passport stamps">
-        {entries.map((entry) => <StampCard key={entry.country.code} entry={entry} />)}
-        {locked.map((country) => <LockedStampCard key={country.code} country={country} />)}
-      </section>
+      {hasResults ? (
+        <section className="stamp-grid" aria-label={scope === "unlocked" ? "Unlocked passport stamps" : "All passport countries"}>
+          {visibleEntries.map((entry) => <StampCard key={entry.country.code} entry={entry} />)}
+          {locked.map((country) => <LockedStampCard key={country.code} country={country} />)}
+        </section>
+      ) : (
+        <section className="empty-state passport-empty"><h2>No matching stamps</h2><p>Choose another sport to see countries from those activities.</p></section>
+      )}
     </>
   );
 }

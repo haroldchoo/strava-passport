@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDashboardSummary, buildExport, buildPassportEntries } from "@/lib/domain";
+import { buildDashboardSummary, buildExport, buildPassportEntries, filterAndSortPassportEntries } from "@/lib/domain";
 import { createDemoState } from "@/lib/demo";
 
 describe("passport domain", () => {
@@ -34,6 +34,16 @@ describe("passport domain", () => {
     expect(summary.countriesVisited).toBe(5);
     expect(summary.activityCount).toBe(13);
     expect(summary.totalDistanceMeters).toBeGreaterThan(buildDashboardSummary(createDemoState()).totalDistanceMeters);
+  });
+
+  it("filters passport entries by sport and orders them by latest visit", () => {
+    const entries = buildPassportEntries(createDemoState());
+    const runs = filterAndSortPassportEntries(entries, "Run", "latest");
+    const latest = filterAndSortPassportEntries(entries, "all", "latest");
+
+    expect(runs.every((entry) => entry.sportTypes.includes("Run"))).toBe(true);
+    expect(runs.map((entry) => entry.country.code)).toEqual(["KR", "JP", "ES", "US"]);
+    expect(latest.map((entry) => entry.country.code)).toEqual(["KR", "JP", "FR", "ES", "US"]);
   });
 
   it("exports no provider tokens or coordinates", () => {

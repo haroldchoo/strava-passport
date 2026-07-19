@@ -1,5 +1,7 @@
 import type { ActivitySummary, AppState, DashboardSummary, PassportEntry } from "@/lib/types";
 
+export type PassportSort = "latest" | "earliest" | "country" | "activities";
+
 export function buildPassportEntries(state: Pick<AppState, "activities" | "countries">): PassportEntry[] {
   const countriesByCode = new Map(state.countries.map((country) => [country.code, country]));
   const grouped = new Map<string, ActivitySummary[]>();
@@ -46,6 +48,16 @@ export function buildDashboardSummary(state: AppState): DashboardSummary {
     recentCountries: [...passportEntries].sort((a, b) => Date.parse(b.lastVisitedAt) - Date.parse(a.lastVisitedAt)).slice(0, 4),
     recentActivities: [...state.activities].sort((a, b) => Date.parse(b.startTime) - Date.parse(a.startTime)).slice(0, 6),
   };
+}
+
+export function filterAndSortPassportEntries(entries: PassportEntry[], sportType: string, sortBy: PassportSort) {
+  const filtered = sportType === "all" ? entries : entries.filter((entry) => entry.sportTypes.includes(sportType));
+  return [...filtered].sort((a, b) => {
+    if (sortBy === "latest") return Date.parse(b.lastVisitedAt) - Date.parse(a.lastVisitedAt);
+    if (sortBy === "earliest") return Date.parse(a.firstVisitedAt) - Date.parse(b.firstVisitedAt);
+    if (sortBy === "activities") return b.activityCount - a.activityCount || a.country.name.localeCompare(b.country.name);
+    return a.country.name.localeCompare(b.country.name);
+  });
 }
 
 export function buildExport(state: AppState) {
