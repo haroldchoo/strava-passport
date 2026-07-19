@@ -15,6 +15,27 @@ describe("passport domain", () => {
     expect(summary.countriesVisited).toBe(5);
   });
 
+  it("retains virtual rides without allowing them to unlock countries", () => {
+    const state = createDemoState();
+    state.activities.push({
+      ...state.activities[0],
+      id: "virtual-canada",
+      countryCode: "CA",
+      sportType: "VirtualRide",
+      distanceMeters: 40000,
+      flags: { ...state.activities[0].flags, trainer: true },
+      geographicResolutionStatus: "resolved",
+    });
+
+    const entries = buildPassportEntries(state);
+    const summary = buildDashboardSummary(state);
+
+    expect(entries.some((entry) => entry.country.code === "CA")).toBe(false);
+    expect(summary.countriesVisited).toBe(5);
+    expect(summary.activityCount).toBe(13);
+    expect(summary.totalDistanceMeters).toBeGreaterThan(buildDashboardSummary(createDemoState()).totalDistanceMeters);
+  });
+
   it("exports no provider tokens or coordinates", () => {
     const serialized = JSON.stringify(buildExport(createDemoState()));
     expect(serialized).not.toMatch(/access.?token|refresh.?token|client.?secret|latlng|polyline|coordinates/i);

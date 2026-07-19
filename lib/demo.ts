@@ -76,7 +76,7 @@ export function createDemoState(): AppState {
       providerStatus: "Demo mode",
       createdAt: "2026-07-19T00:00:00.000Z",
     },
-    activities: demoActivities,
+    activities: structuredClone(demoActivities),
     countries,
     privacySettings: structuredClone(defaultPrivacySettings),
     syncJob: {

@@ -5,7 +5,7 @@ export function buildPassportEntries(state: Pick<AppState, "activities" | "count
   const grouped = new Map<string, ActivitySummary[]>();
 
   for (const activity of state.activities) {
-    if (activity.geographicResolutionStatus !== "resolved" || !activity.countryCode) continue;
+    if (!isPassportEligibleActivity(activity)) continue;
     const group = grouped.get(activity.countryCode) ?? [];
     group.push(activity);
     grouped.set(activity.countryCode, group);
@@ -83,6 +83,13 @@ export function formatDate(timestamp: string) {
 export function sportLabel(sportType: string) {
   const normalized = sportType.replace(/([a-z])([A-Z])/g, "$1 $2");
   return normalized.replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+export function isPassportEligibleActivity(activity: ActivitySummary): activity is ActivitySummary & { countryCode: string } {
+  if (activity.geographicResolutionStatus !== "resolved" || !activity.countryCode) return false;
+  const sportType = activity.sportType.replace(/[\s_-]/g, "").toLowerCase();
+  const isVirtualRide = sportType === "virtualride" || (activity.flags.trainer && sportType.endsWith("ride"));
+  return !isVirtualRide;
 }
 
 function sum<T extends Record<string, unknown>>(items: T[], key: keyof T) {
