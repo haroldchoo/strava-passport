@@ -23,6 +23,11 @@ export function PassportApp() {
     setState((await response.json()) as AppState);
   }, []);
 
+  const toast = (message: string) => {
+    setNotice(message);
+    window.setTimeout(() => setNotice(null), 3600);
+  };
+
   useEffect(() => {
     const readRoute = () => {
       const candidate = window.location.hash.replace("#", "") as RouteName;
@@ -33,16 +38,21 @@ export function PassportApp() {
     const loadTimer = window.setTimeout(() => void loadState(), 0);
     const theme = window.localStorage.getItem("strava-passport-theme");
     document.documentElement.classList.toggle("dark", theme === "dark");
+    const params = new URLSearchParams(window.location.search);
+    const oauthError = params.get("oauth_error");
+    let toastTimer: number | null = null;
+    if (oauthError) {
+      toastTimer = window.setTimeout(() => toast(oauthError), 0);
+      params.delete("oauth_error");
+      const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}${window.location.hash}`;
+      window.history.replaceState(null, "", nextUrl);
+    }
     return () => {
       window.clearTimeout(loadTimer);
+      if (toastTimer) window.clearTimeout(toastTimer);
       window.removeEventListener("hashchange", readRoute);
     };
   }, [loadState]);
-
-  const toast = (message: string) => {
-    setNotice(message);
-    window.setTimeout(() => setNotice(null), 3600);
-  };
 
   const toggleTheme = () => {
     document.documentElement.classList.toggle("dark");

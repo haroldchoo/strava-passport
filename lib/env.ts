@@ -5,7 +5,6 @@ const requiredServerVariables = [
   "SUPABASE_SERVICE_ROLE_KEY",
   "SESSION_SECRET",
   "TOKEN_ENCRYPTION_KEY",
-  "SYNC_WORKER_SECRET",
 ] as const;
 
 export function serverEnv() {
@@ -21,7 +20,7 @@ export function serverEnv() {
     supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
     sessionSecret: process.env.SESSION_SECRET!,
     tokenEncryptionKey: process.env.TOKEN_ENCRYPTION_KEY!,
-    syncWorkerSecret: process.env.SYNC_WORKER_SECRET!,
+    syncWorkerSecret: process.env.SYNC_WORKER_SECRET ?? "",
     syncBatchSize: numberEnv("SYNC_BATCH_SIZE", 4),
     syncMaxPagesPerRun: numberEnv("SYNC_MAX_PAGES_PER_RUN", 8),
   };
