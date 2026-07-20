@@ -39,6 +39,7 @@ Add these Vercel variables for Production and Preview where appropriate:
 | `TOKEN_ENCRYPTION_KEY` | Second generated value; must decode to exactly 32 bytes |
 | `SYNC_WORKER_SECRET` | Third generated value used as a bearer token for `/api/cron/sync` |
 | `CRON_SECRET` | Same value as `SYNC_WORKER_SECRET` when using Vercel Cron |
+| `INVITE_ADMIN_SECRET` | Separate generated value used to create invite links through `/api/admin/invites` |
 | `SYNC_BATCH_SIZE` | Optional number of jobs claimed per worker run; default `4` |
 | `SYNC_MAX_PAGES_PER_RUN` | Optional Strava pages processed per worker run; default `8` |
 
@@ -58,20 +59,22 @@ The app requests `read,activity:read_all`. Declining `activity:read_all` aborts 
 
 ## 5. Create invites
 
-Invite codes are stored only as salted SHA-256 hashes using `SESSION_SECRET` as the salt. Generate a code for the user, then insert its hash:
+Invite codes are stored only as salted SHA-256 hashes using `SESSION_SECRET` as the salt. The easiest path is the protected admin API:
+
+```bash
+curl -X POST https://YOUR-VERCEL-HOST/api/admin/invites \
+  -H "Authorization: Bearer $INVITE_ADMIN_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"athlete@example.com","expiresInDays":30}'
+```
+
+The response includes a one-time `code` and `inviteUrl`. Send the user the `inviteUrl`; they do not need Supabase, Vercel, or a terminal.
+
+If the admin API is unavailable, manually generate a code/hash using the production `SESSION_SECRET`, then insert the hash:
 
 ```bash
 node -e 'const {createHash,randomBytes}=require("node:crypto"); const code=randomBytes(8).toString("base64url").toUpperCase(); const hash=createHash("sha256").update(`${process.env.SESSION_SECRET}:${code}`).digest("hex"); console.log({code,hash});'
 ```
-
-```sql
-insert into public.invites (email, code_hash, expires_at)
-values ('athlete@example.com', 'PASTE_HASH', now() + interval '30 days');
-```
-
-Send the user the invite code. They can enter it from the Connect Strava prompt or open:
-
-`https://YOUR-VERCEL-HOST/api/auth/strava?invite=INVITE_CODE`
 
 ## 6. Configure sync worker
 

@@ -21,6 +21,7 @@ export function serverEnv() {
     sessionSecret: process.env.SESSION_SECRET!,
     tokenEncryptionKey: process.env.TOKEN_ENCRYPTION_KEY!,
     syncWorkerSecret: process.env.SYNC_WORKER_SECRET ?? "",
+    inviteAdminSecret: process.env.INVITE_ADMIN_SECRET ?? "",
     syncBatchSize: numberEnv("SYNC_BATCH_SIZE", 4),
     syncMaxPagesPerRun: numberEnv("SYNC_MAX_PAGES_PER_RUN", 8),
   };
