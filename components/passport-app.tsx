@@ -91,7 +91,7 @@ export function PassportApp() {
       if (!start.ok) throw new Error(await responseMessage(start));
       const job = (await start.json()) as SyncJob;
       setState((current) => ({ ...current, syncJob: job }));
-      toast("Sync queued. The server worker will process it shortly.");
+      toast(job.status === "completed" ? "Strava synchronization completed." : "Sync advanced. Continue if more activities remain.");
     } catch (error) {
       toast(error instanceof Error ? error.message : "Synchronization failed.");
     } finally {
@@ -215,7 +215,7 @@ function Dashboard({ state, busy, onSync }: { state: AppState; busy: boolean; on
           <div className="action-row">
             {state.authenticated ? (
               <button className="button primary" type="button" disabled={busy || !state.providerConnected} onClick={onSync}>
-                {busy ? "Syncing..." : "Manual Sync"}
+                {busy ? "Syncing..." : activeSyncLabel(state.syncJob)}
               </button>
             ) : (
               <button className="button primary" type="button" onClick={onSync}>Connect Strava</button>
@@ -413,4 +413,5 @@ function SyncProgress({ job }: { job: SyncJob }) { if (!["pending", "running", "
 function initials(name: string) { return name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase(); }
 function privacyLabel(key: string) { return key.replace(/([A-Z])/g, " $1").replace(/^./, (letter) => letter.toUpperCase()); }
 function syncLabel(job: SyncJob) { if (job.status === "completed") return "Last sync complete"; if (job.status === "pending") return "Sync queued"; if (job.status === "running") return `${job.processed} activities processed`; if (job.status === "rate_limited") return "Sync paused by rate limit"; if (job.status === "failed") return "Last sync failed - retryable"; return "Sync ready"; }
+function activeSyncLabel(job: SyncJob) { return ["pending", "running", "rate_limited"].includes(job.status) ? "Continue Sync" : "Manual Sync"; }
 async function responseMessage(response: Response) { try { const body = await response.json() as { error?: string }; return body.error ?? `Request failed (${response.status})`; } catch { return `Request failed (${response.status})`; } }

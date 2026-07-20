@@ -53,6 +53,27 @@ export async function runSyncWorker() {
   return result;
 }
 
+export async function runSyncJobNow(job: SyncJob, maxPages = 5) {
+  const result: WorkerResult = { claimed: 1, processedPages: 0, completed: 0, paused: 0, failed: 0 };
+  const rateLimitedUntil = await getProviderRateLimit();
+  if (rateLimitedUntil) return { ...result, rateLimitedUntil };
+
+  let current: SyncJob | null = job;
+  let remainingPages = Math.max(1, maxPages);
+  while (current && remainingPages > 0 && (current.status === "pending" || current.status === "running" || (current.status === "rate_limited" && current.retryAfterSeconds === 0))) {
+    const pageResult = await processSyncPage(current);
+    result.processedPages += pageResult.processedPage ? 1 : 0;
+    remainingPages -= pageResult.processedPage ? 1 : 0;
+    if (pageResult.completed) result.completed += 1;
+    if (pageResult.paused) result.paused += 1;
+    if (pageResult.failed) result.failed += 1;
+    if (pageResult.stopAll || pageResult.completed || pageResult.paused || pageResult.failed) break;
+    current = pageResult.nextJob;
+  }
+
+  return result;
+}
+
 export async function processSyncPage(job: SyncJob) {
   const athleteId = await athleteIdForJob(job);
   try {
