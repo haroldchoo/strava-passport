@@ -78,7 +78,7 @@ node -e 'const {createHash,randomBytes}=require("node:crypto"); const code=rando
 
 ## 6. Configure sync worker
 
-The repository includes `vercel.json`, which registers `/api/cron/sync` to run every minute on production deployments. Vercel sends `CRON_SECRET` as the bearer token when that environment variable is configured.
+The repository includes `vercel.json`, which registers `/api/cron/sync` to run daily on production deployments. Vercel Hobby projects can only run cron jobs once per day; use a Pro project or an external scheduler if you want minute-level sync processing. Vercel sends `CRON_SECRET` as the bearer token when that environment variable is configured.
 
 For manual testing or Supabase Scheduler, call:
 
@@ -87,7 +87,7 @@ curl -X POST https://YOUR-VERCEL-HOST/api/cron/sync \
   -H "Authorization: Bearer $SYNC_WORKER_SECRET"
 ```
 
-A one-minute cadence is appropriate for a 100-300 person beta. The worker claims ready jobs, respects global Strava rate-limit pauses, and exits after the configured page budget.
+The worker claims ready jobs, respects global Strava rate-limit pauses, and exits after the configured page budget.
 
 ## 7. Live acceptance test
 
