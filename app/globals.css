@@ -43,3 +43,86 @@ input:disabled {
   color: #17202a;
   background: #ffffff;
 }
+
+.admin-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.admin-panel {
+  width: min(720px, 100%);
+  display: grid;
+  gap: 24px;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.admin-brand {
+  min-width: 0;
+}
+
+.admin-heading h1 {
+  margin: 8px 0;
+  font-size: 34px;
+  line-height: 1.08;
+}
+
+.admin-heading p {
+  margin: 0;
+  color: var(--muted);
+  max-width: 56ch;
+}
+
+.admin-form {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-form label,
+.admin-result div:first-child {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-form label span,
+.admin-result span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-form input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 12px 14px;
+}
+
+.admin-result {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.admin-result code {
+  display: block;
+  overflow-wrap: anywhere;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.admin-result small {
+  color: var(--muted);
+}

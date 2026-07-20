@@ -59,7 +59,13 @@ The app requests `read,activity:read_all`. Declining `activity:read_all` aborts 
 
 ## 5. Create invites
 
-Invite codes are stored only as salted SHA-256 hashes using `SESSION_SECRET` as the salt. The easiest path is the protected admin API:
+Invite codes are stored only as salted SHA-256 hashes using `SESSION_SECRET` as the salt. The easiest path is the protected admin page:
+
+`https://YOUR-VERCEL-HOST/admin/invites`
+
+Paste `INVITE_ADMIN_SECRET`, enter the friend's email, create the invite, then copy or share the generated link.
+
+The same flow is available through the protected admin API:
 
 ```bash
 curl -X POST https://YOUR-VERCEL-HOST/api/admin/invites \
