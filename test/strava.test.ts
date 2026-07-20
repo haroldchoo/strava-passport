@@ -10,6 +10,7 @@ beforeEach(() => {
   process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role";
   process.env.SESSION_SECRET = "s".repeat(32);
   process.env.TOKEN_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString("base64");
+  process.env.SYNC_WORKER_SECRET = "worker-secret";
   vi.restoreAllMocks();
 });
 

@@ -2,11 +2,13 @@ import type { ActivitySummary, AppState, DashboardSummary, PassportEntry } from 
 
 export type PassportSort = "latest" | "earliest" | "country" | "activities";
 
-export function buildPassportEntries(state: Pick<AppState, "activities" | "countries">): PassportEntry[] {
+export function buildPassportEntries(state: Pick<AppState, "countries"> & { activities?: ActivitySummary[]; passportEntries?: PassportEntry[] }): PassportEntry[] {
+  const activities = state.activities ?? [];
+  if (!state.activities && state.passportEntries) return state.passportEntries;
   const countriesByCode = new Map(state.countries.map((country) => [country.code, country]));
   const grouped = new Map<string, ActivitySummary[]>();
 
-  for (const activity of state.activities) {
+  for (const activity of activities) {
     if (!isPassportEligibleActivity(activity)) continue;
     const group = grouped.get(activity.countryCode) ?? [];
     group.push(activity);
@@ -34,19 +36,21 @@ export function buildPassportEntries(state: Pick<AppState, "activities" | "count
     .sort((a, b) => a.country.name.localeCompare(b.country.name));
 }
 
-export function buildDashboardSummary(state: AppState): DashboardSummary {
+export function buildDashboardSummary(state: Pick<AppState, "countries"> & { activities?: ActivitySummary[]; passportEntries?: PassportEntry[]; dashboardSummary?: DashboardSummary }): DashboardSummary {
+  const activities = state.activities ?? [];
+  if (!state.activities && state.dashboardSummary) return state.dashboardSummary;
   const passportEntries = buildPassportEntries(state);
   return {
     passportEntries,
     countriesVisited: passportEntries.length,
     continentsVisited: new Set(passportEntries.map((entry) => entry.country.continent)).size,
-    activityCount: state.activities.length,
-    unresolvedActivityCount: state.activities.filter((activity) => activity.geographicResolutionStatus === "unresolved").length,
-    totalDistanceMeters: sum(state.activities, "distanceMeters"),
-    totalMovingTimeSeconds: sum(state.activities, "movingTimeSeconds"),
-    totalElevationGainMeters: sum(state.activities, "elevationGainMeters"),
+    activityCount: activities.length,
+    unresolvedActivityCount: activities.filter((activity) => activity.geographicResolutionStatus === "unresolved").length,
+    totalDistanceMeters: sum(activities, "distanceMeters"),
+    totalMovingTimeSeconds: sum(activities, "movingTimeSeconds"),
+    totalElevationGainMeters: sum(activities, "elevationGainMeters"),
     recentCountries: [...passportEntries].sort((a, b) => Date.parse(b.lastVisitedAt) - Date.parse(a.lastVisitedAt)).slice(0, 4),
-    recentActivities: [...state.activities].sort((a, b) => Date.parse(b.startTime) - Date.parse(a.startTime)).slice(0, 6),
+    recentActivities: [...activities].sort((a, b) => Date.parse(b.startTime) - Date.parse(a.startTime)).slice(0, 6),
   };
 }
 
@@ -68,7 +72,7 @@ export function buildExport(state: AppState) {
       createdAt: state.user.createdAt,
     },
     passport: buildPassportEntries(state),
-    activitySummaries: state.activities,
+    activitySummaries: state.activities ?? state.recentActivities,
     privacySettings: state.privacySettings,
     connectionMetadata: {
       provider: "strava",

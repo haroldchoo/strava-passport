@@ -1,4 +1,5 @@
 import { countries } from "@/lib/countries";
+import { buildDashboardSummary, buildPassportEntries } from "@/lib/domain";
 import type { ActivitySummary, AppState, PrivacySettings } from "@/lib/types";
 
 const demoTimestamp = "2026-07-19T00:00:00.000Z";
@@ -66,6 +67,10 @@ const demoActivities = [
 ];
 
 export function createDemoState(): AppState {
+  const activities = structuredClone(demoActivities);
+  const base = { activities, countries };
+  const passportEntries = buildPassportEntries(base);
+  const dashboardSummary = buildDashboardSummary(base);
   return {
     mode: "demo",
     authenticated: false,
@@ -76,7 +81,10 @@ export function createDemoState(): AppState {
       providerStatus: "Demo mode",
       createdAt: "2026-07-19T00:00:00.000Z",
     },
-    activities: structuredClone(demoActivities),
+    activities,
+    recentActivities: dashboardSummary.recentActivities,
+    passportEntries,
+    dashboardSummary,
     countries,
     privacySettings: structuredClone(defaultPrivacySettings),
     syncJob: {

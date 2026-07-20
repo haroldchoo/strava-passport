@@ -3,9 +3,9 @@
 STRAVA Passport is a private-by-default athletic travel journal. This repository contains two independently hosted surfaces:
 
 - The dependency-free demo in `index.html` and `src/`, published through GitHub Pages.
-- The private Strava beta in `app/`, `components/`, and `lib/`, deployed as a Next.js application on Vercel.
+- The invite-only Strava beta in `app/`, `components/`, and `lib/`, deployed as a Next.js application on Vercel.
 
-The beta signs in one allow-listed Strava athlete, imports all activity summaries, resolves each activity's start point to an ISO country code locally on the server, and immediately discards the coordinates. Access and refresh tokens are encrypted before storage. Real-data public sharing is disabled.
+The beta signs in invited Strava athletes, imports activity summaries through a server-side sync worker, resolves each activity's start point to an ISO country code locally on the server, and immediately discards the coordinates. Access and refresh tokens are encrypted before storage. Real-data public sharing is disabled.
 
 ## Local development
 
@@ -35,7 +35,8 @@ npm audit
 - Supabase Postgres stores the athlete, encrypted Strava connection, normalized activity summaries, sync jobs, and privacy settings.
 - Browser access to Supabase tables is revoked; only server routes use the service-role key.
 - OAuth sessions use a signed, HTTP-only, same-site cookie.
-- Activity sync processes one Strava page of up to 200 summaries per request and can resume after a rate limit.
+- Activity sync is queued by the browser and processed by a protected server worker in bounded Strava pages.
+- Dashboard state returns cached passport summaries and recent activities; the Activity Log is paginated.
 - Country lookup runs locally from packaged GeoJSON boundaries. Coordinates and polylines are never persisted or returned.
 - The current public demo remains private-data-free and continues to work as a static site.
 

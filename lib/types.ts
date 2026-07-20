@@ -47,6 +47,7 @@ export type PrivacySettings = {
 
 export type SyncJob = {
   id: string;
+  athleteId?: string;
   status: SyncStatus;
   page: number;
   processed: number;
@@ -68,11 +69,19 @@ export type AppState = {
     providerStatus: string;
     createdAt: string;
   };
-  activities: ActivitySummary[];
+  activities?: ActivitySummary[];
+  recentActivities: ActivitySummary[];
+  passportEntries: PassportEntry[];
+  dashboardSummary: DashboardSummary;
   countries: Country[];
   privacySettings: PrivacySettings;
   syncJob: SyncJob;
   providerConnected: boolean;
+};
+
+export type ActivityPage = {
+  items: ActivitySummary[];
+  nextCursor: string | null;
 };
 
 export type PassportEntry = {

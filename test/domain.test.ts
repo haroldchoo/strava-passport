@@ -5,7 +5,7 @@ import { createDemoState } from "@/lib/demo";
 describe("passport domain", () => {
   it("aggregates resolved activities and excludes unresolved locations", () => {
     const state = createDemoState();
-    state.activities.push({ ...state.activities[0], id: "unresolved", countryCode: null, geographicResolutionStatus: "unresolved" });
+    state.activities!.push({ ...state.activities![0], id: "unresolved", countryCode: null, geographicResolutionStatus: "unresolved" });
     const entries = buildPassportEntries(state);
     const summary = buildDashboardSummary(state);
 
@@ -17,13 +17,13 @@ describe("passport domain", () => {
 
   it("retains virtual rides without allowing them to unlock countries", () => {
     const state = createDemoState();
-    state.activities.push({
-      ...state.activities[0],
+    state.activities!.push({
+      ...state.activities![0],
       id: "virtual-canada",
       countryCode: "CA",
       sportType: "VirtualRide",
       distanceMeters: 40000,
-      flags: { ...state.activities[0].flags, trainer: true },
+      flags: { ...state.activities![0].flags, trainer: true },
       geographicResolutionStatus: "resolved",
     });
 

@@ -5,7 +5,7 @@ import { WorldMap } from "@/components/world-map";
 import { buildDashboardSummary, buildPassportEntries, filterAndSortPassportEntries, formatDate, formatDistance, formatDuration, sportLabel } from "@/lib/domain";
 import type { PassportSort } from "@/lib/domain";
 import { createDemoState } from "@/lib/demo";
-import type { ActivitySummary, AppState, Country, PassportEntry, PrivacySettings, SyncJob } from "@/lib/types";
+import type { ActivityPage, ActivitySummary, AppState, Country, PassportEntry, PrivacySettings, SyncJob } from "@/lib/types";
 
 type RouteName = "dashboard" | "passport" | "map" | "activities" | "privacy" | "public" | "settings";
 
@@ -49,35 +49,30 @@ export function PassportApp() {
     window.localStorage.setItem("strava-passport-theme", document.documentElement.classList.contains("dark") ? "dark" : "light");
   };
 
-  const runJob = useCallback(async (initialJob: SyncJob) => {
-    setBusy(true);
-    let job = initialJob;
-    try {
-      while (job.status === "pending" || job.status === "running" || (job.status === "rate_limited" && job.retryAfterSeconds === 0)) {
-        const next = await fetch(`/api/sync/${job.id}/next`, { method: "POST" });
-        if (!next.ok) throw new Error(await responseMessage(next));
-        job = (await next.json()) as SyncJob;
-        setState((current) => ({ ...current, syncJob: job }));
-      }
-      await loadState();
-      setNotice(job.status === "completed" ? "Strava synchronization completed." : job.error ?? "Synchronization paused.");
-      window.setTimeout(() => setNotice(null), 3600);
-    } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Synchronization failed.");
-    } finally {
-      setBusy(false);
-    }
-  }, [loadState]);
-
   useEffect(() => {
-    if (!state.authenticated || state.syncJob.status !== "pending" || busy) return;
-    const syncTimer = window.setTimeout(() => void runJob(state.syncJob), 0);
+    if (!state.authenticated || !["pending", "running", "rate_limited"].includes(state.syncJob.status) || state.syncJob.id === "none") return;
+    const delay = state.syncJob.status === "rate_limited" && state.syncJob.retryAfterSeconds
+      ? Math.min(Math.max(state.syncJob.retryAfterSeconds, 5), 60) * 1000
+      : 5000;
+    const syncTimer = window.setTimeout(async () => {
+      const response = await fetch(`/api/sync/${state.syncJob.id}`, { cache: "no-store" });
+      if (!response.ok) return;
+      const job = (await response.json()) as SyncJob;
+      setState((current) => ({ ...current, syncJob: job }));
+      if (job.status === "completed") {
+        await loadState();
+        toast("Strava synchronization completed.");
+      }
+      if (job.status === "failed") toast(job.error ?? "Synchronization failed.");
+    }, delay);
     return () => window.clearTimeout(syncTimer);
-  }, [busy, runJob, state.authenticated, state.syncJob]);
+  }, [loadState, state.authenticated, state.syncJob]);
 
   const sync = async () => {
     if (!state.authenticated) {
-      window.location.assign("/api/auth/strava");
+      const inviteCode = window.prompt("Enter your STRAVA Passport invite code");
+      if (!inviteCode?.trim()) return;
+      window.location.assign(`/api/auth/strava?invite=${encodeURIComponent(inviteCode.trim())}`);
       return;
     }
     setBusy(true);
@@ -86,7 +81,7 @@ export function PassportApp() {
       if (!start.ok) throw new Error(await responseMessage(start));
       const job = (await start.json()) as SyncJob;
       setState((current) => ({ ...current, syncJob: job }));
-      await runJob(job);
+      toast("Sync queued. The server worker will process it shortly.");
     } catch (error) {
       toast(error instanceof Error ? error.message : "Synchronization failed.");
     } finally {
@@ -213,7 +208,7 @@ function Dashboard({ state, busy, onSync }: { state: AppState; busy: boolean; on
                 {busy ? "Syncing..." : "Manual Sync"}
               </button>
             ) : (
-              <a className="button primary" href="/api/auth/strava">Connect Strava</a>
+              <button className="button primary" type="button" onClick={onSync}>Connect Strava</button>
             )}
             <a className="button secondary" href="#privacy">Privacy Center</a>
           </div>
@@ -240,7 +235,7 @@ function Dashboard({ state, busy, onSync }: { state: AppState; busy: boolean; on
         </div>
         <div>
           <SectionHeading title="Recent activities" href="#activities" label="View all" />
-          <div className="activity-list">{summary.recentActivities.map((activity) => <ActivityRow key={activity.id} activity={activity} countries={state.countries} />)}</div>
+          <div className="activity-list">{state.recentActivities.map((activity) => <ActivityRow key={activity.id} activity={activity} countries={state.countries} />)}</div>
         </div>
       </section>
       <section className="privacy-band">
@@ -308,8 +303,32 @@ function MapView({ state }: { state: AppState }) {
 }
 
 function Activities({ state }: { state: AppState }) {
-  const rows = [...state.activities].sort((a, b) => Date.parse(b.startTime) - Date.parse(a.startTime));
+  const [rows, setRows] = useState<ActivitySummary[]>(() => state.authenticated ? state.recentActivities : state.activities ?? state.recentActivities);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const countries = new Map(state.countries.map((country) => [country.code, country]));
+  const loadPage = useCallback(async (cursor: string | null = null) => {
+    if (!state.authenticated) return;
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ limit: "50" });
+      if (cursor) params.set("cursor", cursor);
+      const response = await fetch(`/api/activities?${params.toString()}`, { cache: "no-store" });
+      if (!response.ok) throw new Error(await responseMessage(response));
+      const page = (await response.json()) as ActivityPage;
+      setRows((current) => cursor ? [...current, ...page.items] : page.items);
+      setNextCursor(page.nextCursor);
+    } finally {
+      setLoading(false);
+    }
+  }, [state.authenticated]);
+
+  useEffect(() => {
+    if (!state.authenticated) return;
+    const timer = window.setTimeout(() => void loadPage(null), 0);
+    return () => window.clearTimeout(timer);
+  }, [loadPage, state.authenticated, state.syncJob.completedAt]);
+
   return (
     <>
       <PageTitle title="Activities" copy="Private summaries used to build your passport." />
@@ -320,6 +339,7 @@ function Activities({ state }: { state: AppState }) {
             return <tr key={activity.id}><td>{activity.name}</td><td>{country ? `${country.flag} ${country.name}` : <span className="unresolved">Unresolved</span>}</td><td>{sportLabel(activity.sportType)}</td><td>{formatDate(activity.startTime)}</td><td>{formatDistance(activity.distanceMeters)}</td><td>{formatDuration(activity.movingTimeSeconds)}</td></tr>;
           })}</tbody>
         </table>
+        {state.authenticated && nextCursor && <button className="button secondary" type="button" disabled={loading} onClick={() => void loadPage(nextCursor)}>{loading ? "Loading..." : "Load More"}</button>}
       </section>
     </>
   );
@@ -378,9 +398,9 @@ function ActivityRow({ activity, countries }: { activity: ActivitySummary; count
 function StampCard({ entry }: { entry: PassportEntry }) { return <article className="stamp-card"><div className={`stamp ${entry.stamp.variant}`}><span>{entry.country.flag}</span><strong>{entry.country.code}</strong><small>{formatDate(entry.firstVisitedAt)}</small></div><h2>{entry.country.name}</h2><p>{entry.activityCount} activities · {formatDistance(entry.totalDistanceMeters)}</p><div className="badge-row">{entry.sportTypes.map((sport) => <span className="badge" key={sport}>{sportLabel(sport)}</span>)}</div></article>; }
 function LockedStampCard({ country }: { country: Country }) { return <article className="stamp-card locked"><div className="stamp locked-stamp"><span>{country.flag}</span><strong>{country.code}</strong><small>Locked</small></div><h2>{country.name}</h2><p>No activities imported yet.</p></article>; }
 function Toggle({ label, checked, disabled = false, onChange }: { label: string; checked: boolean; disabled?: boolean; onChange?: (value: boolean) => void }) { return <label className="toggle"><span>{label}</span><input type="checkbox" checked={checked} disabled={disabled} onChange={(event) => onChange?.(event.target.checked)} /></label>; }
-function SyncProgress({ job }: { job: SyncJob }) { if (!["pending", "running", "rate_limited"].includes(job.status)) return null; return <div className="sync-progress"><progress max={Math.max(job.processed + 200, 200)} value={job.processed} /><small>{job.status === "rate_limited" ? `Paused for ${job.retryAfterSeconds ?? "a few"} seconds` : `${job.processed} activities processed`}</small></div>; }
+function SyncProgress({ job }: { job: SyncJob }) { if (!["pending", "running", "rate_limited"].includes(job.status)) return null; return <div className="sync-progress"><progress max={Math.max(job.processed + 200, 200)} value={job.processed} /><small>{job.status === "pending" ? "Queued for server sync" : job.status === "rate_limited" ? `Paused for ${job.retryAfterSeconds ?? "a few"} seconds` : `${job.processed} activities processed`}</small></div>; }
 
 function initials(name: string) { return name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase(); }
 function privacyLabel(key: string) { return key.replace(/([A-Z])/g, " $1").replace(/^./, (letter) => letter.toUpperCase()); }
-function syncLabel(job: SyncJob) { if (job.status === "completed") return "Last sync complete"; if (job.status === "running" || job.status === "pending") return `${job.processed} activities processed`; if (job.status === "rate_limited") return "Sync paused by rate limit"; if (job.status === "failed") return "Last sync failed"; return "Sync ready"; }
+function syncLabel(job: SyncJob) { if (job.status === "completed") return "Last sync complete"; if (job.status === "pending") return "Sync queued"; if (job.status === "running") return `${job.processed} activities processed`; if (job.status === "rate_limited") return "Sync paused by rate limit"; if (job.status === "failed") return "Last sync failed - retryable"; return "Sync ready"; }
 async function responseMessage(response: Response) { try { const body = await response.json() as { error?: string }; return body.error ?? `Request failed (${response.status})`; } catch { return `Request failed (${response.status})`; } }

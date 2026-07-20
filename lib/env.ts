@@ -1,11 +1,11 @@
 const requiredServerVariables = [
   "STRAVA_CLIENT_ID",
   "STRAVA_CLIENT_SECRET",
-  "STRAVA_ALLOWED_ATHLETE_ID",
   "SUPABASE_URL",
   "SUPABASE_SERVICE_ROLE_KEY",
   "SESSION_SECRET",
   "TOKEN_ENCRYPTION_KEY",
+  "SYNC_WORKER_SECRET",
 ] as const;
 
 export function serverEnv() {
@@ -17,14 +17,21 @@ export function serverEnv() {
     appUrl: new URL(appUrl).origin,
     stravaClientId: process.env.STRAVA_CLIENT_ID!,
     stravaClientSecret: process.env.STRAVA_CLIENT_SECRET!,
-    allowedAthleteId: process.env.STRAVA_ALLOWED_ATHLETE_ID!,
     supabaseUrl: process.env.SUPABASE_URL!,
     supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
     sessionSecret: process.env.SESSION_SECRET!,
     tokenEncryptionKey: process.env.TOKEN_ENCRYPTION_KEY!,
+    syncWorkerSecret: process.env.SYNC_WORKER_SECRET!,
+    syncBatchSize: numberEnv("SYNC_BATCH_SIZE", 4),
+    syncMaxPagesPerRun: numberEnv("SYNC_MAX_PAGES_PER_RUN", 8),
   };
 }
 
 export function isProduction() {
   return process.env.NODE_ENV === "production";
+}
+
+function numberEnv(name: string, fallback: number) {
+  const value = Number(process.env[name]);
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
 }
