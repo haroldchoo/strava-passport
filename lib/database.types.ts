@@ -5,7 +5,7 @@ type ConnectionRow = { athlete_id: string; access_token_ciphertext: string; refr
 type SyncJobRow = { id: string; athlete_id: string; status: string; next_page: number; processed: number; imported: number; updated: number; failed: number; error: string | null; retry_after: string | null; started_at: string; completed_at: string | null; locked_at: string | null; locked_by: string | null; attempts: number; last_heartbeat_at: string | null; last_page_processed_at: string | null };
 type ActivityRow = { id: string; athlete_id: string; provider_activity_id: number; name: string; sport_type: string; start_time: string; distance_meters: number; moving_time_seconds: number; elapsed_time_seconds: number; elevation_gain_meters: number; manual: boolean; commute: boolean; trainer: boolean; country_code: string | null; geographic_resolution_status: string; last_seen_sync_id: string; fetched_at: string };
 type PrivacyRow = { athlete_id: string; settings: Json; updated_at: string };
-type InviteRow = { id: string; email: string | null; code_hash: string; status: string; expires_at: string | null; accepted_athlete_id: number | null; accepted_at: string | null; created_at: string; updated_at: string };
+type InviteRow = { id: string; code_hash: string; status: string; expires_at: string | null; accepted_athlete_id: number | null; accepted_at: string | null; created_at: string; updated_at: string };
 type ProviderRateLimitRow = { provider: string; retry_after: string | null; updated_at: string };
 type PassportCountrySummaryRow = { athlete_id: string; country_code: string; first_visited_at: string; last_visited_at: string; activity_count: number; total_distance_meters: number; total_moving_time_seconds: number; total_elevation_gain_meters: number; sport_types: string[]; stamp_variant: string; updated_at: string };
 type AthleteActivityTotalsRow = { athlete_id: string; activity_count: number; unresolved_activity_count: number; total_distance_meters: number; total_moving_time_seconds: number; total_elevation_gain_meters: number; updated_at: string };
@@ -45,7 +45,7 @@ export type Database = {
       };
       invites: {
         Row: InviteRow;
-        Insert: Partial<Pick<InviteRow, "id" | "email" | "status" | "expires_at" | "accepted_athlete_id" | "accepted_at" | "created_at" | "updated_at">> & Pick<InviteRow, "code_hash">;
+        Insert: Partial<Pick<InviteRow, "id" | "status" | "expires_at" | "accepted_athlete_id" | "accepted_at" | "created_at" | "updated_at">> & Pick<InviteRow, "code_hash">;
         Update: Partial<InviteRow>;
         Relationships: [];
       };

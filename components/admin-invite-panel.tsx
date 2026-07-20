@@ -4,7 +4,6 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 
 type InviteResponse = {
-  label: string | null;
   code: string;
   expiresAt: string;
   inviteUrl: string;
@@ -12,7 +11,6 @@ type InviteResponse = {
 
 export function AdminInvitePanel() {
   const [secret, setSecret] = useState("");
-  const [label, setLabel] = useState("");
   const [expiresInDays, setExpiresInDays] = useState(30);
   const [busy, setBusy] = useState(false);
   const [invite, setInvite] = useState<InviteResponse | null>(null);
@@ -30,7 +28,7 @@ export function AdminInvitePanel() {
           Authorization: `Bearer ${secret.trim()}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ label: label.trim() || undefined, expiresInDays }),
+        body: JSON.stringify({ expiresInDays }),
       });
       const body = await response.json() as InviteResponse | { error?: string };
       if (!response.ok) throw new Error("error" in body && body.error ? body.error : `Request failed (${response.status})`);
@@ -81,15 +79,6 @@ export function AdminInvitePanel() {
               onChange={(event) => setSecret(event.target.value)}
               autoComplete="off"
               required
-            />
-          </label>
-          <label>
-            <span>Label / friend name</span>
-            <input
-              type="text"
-              value={label}
-              onChange={(event) => setLabel(event.target.value)}
-              placeholder="John, Alex, Friday run club..."
             />
           </label>
           <label>

@@ -7,8 +7,6 @@ import { supabaseAdmin } from "@/lib/supabase";
 export const runtime = "nodejs";
 
 type InviteRequest = {
-  email?: unknown;
-  label?: unknown;
   expiresInDays?: unknown;
 };
 
@@ -19,25 +17,18 @@ export async function POST(request: Request) {
   if (token !== env.inviteAdminSecret) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await readBody(request);
-  const label = typeof body.label === "string" && body.label.trim()
-    ? body.label.trim()
-    : typeof body.email === "string" && body.email.trim()
-      ? body.email.trim()
-      : null;
   const expiresInDays = Number(body.expiresInDays ?? 30);
   const safeDays = Number.isFinite(expiresInDays) && expiresInDays > 0 ? Math.min(Math.floor(expiresInDays), 365) : 30;
   const code = normalizeInviteCode(randomBytes(8).toString("base64url"));
   const expiresAt = new Date(Date.now() + safeDays * 24 * 60 * 60 * 1000).toISOString();
 
   const { error } = await supabaseAdmin().from("invites").insert({
-    email: label,
     code_hash: hashInviteCode(code),
     expires_at: expiresAt,
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({
-    label,
     code,
     expiresAt,
     inviteUrl: `${env.appUrl}/api/auth/strava?invite=${encodeURIComponent(code)}`,

@@ -1,6 +1,5 @@
 create table public.invites (
   id uuid primary key default gen_random_uuid(),
-  email text,
   code_hash text not null unique,
   status text not null default 'unused' check (status in ('unused', 'accepted', 'revoked')),
   expires_at timestamptz,
