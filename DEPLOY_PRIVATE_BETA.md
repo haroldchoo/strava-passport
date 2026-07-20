@@ -63,7 +63,7 @@ Invite codes are stored only as salted SHA-256 hashes using `SESSION_SECRET` as 
 
 `https://YOUR-VERCEL-HOST/admin/invites`
 
-Paste `INVITE_ADMIN_SECRET`, enter the friend's email, create the invite, then copy or share the generated link.
+Paste `INVITE_ADMIN_SECRET`, enter a label or friend's name, create the invite, then copy or share the generated link.
 
 The same flow is available through the protected admin API:
 
@@ -71,7 +71,7 @@ The same flow is available through the protected admin API:
 curl -X POST https://YOUR-VERCEL-HOST/api/admin/invites \
   -H "Authorization: Bearer $INVITE_ADMIN_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"email":"athlete@example.com","expiresInDays":30}'
+  -d '{"label":"Alex","expiresInDays":30}'
 ```
 
 The response includes a one-time `code` and `inviteUrl`. Send the user the `inviteUrl`; they do not need Supabase, Vercel, or a terminal.

@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 
 type InviteResponse = {
-  email: string | null;
+  label: string | null;
   code: string;
   expiresAt: string;
   inviteUrl: string;
@@ -12,7 +12,7 @@ type InviteResponse = {
 
 export function AdminInvitePanel() {
   const [secret, setSecret] = useState("");
-  const [email, setEmail] = useState("");
+  const [label, setLabel] = useState("");
   const [expiresInDays, setExpiresInDays] = useState(30);
   const [busy, setBusy] = useState(false);
   const [invite, setInvite] = useState<InviteResponse | null>(null);
@@ -30,7 +30,7 @@ export function AdminInvitePanel() {
           Authorization: `Bearer ${secret.trim()}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email: email.trim() || undefined, expiresInDays }),
+        body: JSON.stringify({ label: label.trim() || undefined, expiresInDays }),
       });
       const body = await response.json() as InviteResponse | { error?: string };
       if (!response.ok) throw new Error("error" in body && body.error ? body.error : `Request failed (${response.status})`);
@@ -84,12 +84,12 @@ export function AdminInvitePanel() {
             />
           </label>
           <label>
-            <span>Friend email</span>
+            <span>Label / friend name</span>
             <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="friend@example.com"
+              type="text"
+              value={label}
+              onChange={(event) => setLabel(event.target.value)}
+              placeholder="John, Alex, Friday run club..."
             />
           </label>
           <label>
